@@ -1,0 +1,78 @@
+# Importar NLTK y descargar recursos necesarios
+import nltk
+nltk.download('punkt')
+nltk.download('stopwords')
+
+# Cargar el archivo de texto
+file_path = '/content/kw.txt'  # Reemplaza con la ruta de tu archivo
+with open(file_path, 'r') as file:
+    text = file.read()
+
+# Preprocesamiento: Eliminar signos de puntuación y dobles espacios
+import string
+
+# Creamos una tabla de traducción para eliminar los signos de puntuación
+translator = str.maketrans('', '', string.punctuation)
+
+# Aplicamos la traducción al texto para eliminar los signos de puntuación
+text = text.translate(translator)
+
+# Eliminar dobles espacios
+text = ' '.join(text.split())
+
+# Tokenización de palabras usando NLTK
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+
+tokens = word_tokenize(text.lower())  # Convertir texto a minúsculas para contar palabras de manera case-insensitive
+
+# Eliminar stopwords
+stop_words = set(stopwords.words('spanish'))
+filtered_tokens = [token for token in tokens if token not in stop_words]
+
+# Contar la frecuencia de todos los tokens filtrados en el texto
+from collections import Counter
+
+token_count = Counter(filtered_tokens)
+
+# Ordenar el conteo de tokens por frecuencia
+sorted_token_count = dict(sorted(token_count.items(), key=lambda item: item[1], reverse=True))
+
+# Encontrar los bigramas y trigramas más comunes que comienzan con tokens no stopwords
+from nltk.util import ngrams
+
+bigrams = []
+trigrams = []
+
+# Formar bigramas y trigramas
+for i, token in enumerate(tokens):
+    if token in filtered_tokens:
+        if i < len(tokens) - 1:
+            bigrams.append((tokens[i], tokens[i + 1]))
+        if i < len(tokens) - 2:
+            trigrams.append((tokens[i], tokens[i + 1], tokens[i + 2]))
+
+# Contar la frecuencia de bigramas y trigramas
+bigram_count = Counter(bigrams)
+trigram_count = Counter(trigrams)
+
+# Abrir un archivo para escribir los resultados
+output_file_path = '/content/nlp_results.txt'  # Ruta del archivo de salida
+with open(output_file_path, 'w') as output_file:
+    # Escribir los resultados en el archivo
+    output_file.write("Frecuencia de todos los tokens en el texto (sin stopwords):\n")
+    for token, count in sorted_token_count.items():
+        output_file.write(f"{token}: {count}\n")
+    output_file.write("\n")
+
+    output_file.write("Bigrama \t\t Frecuencia\n")
+    output_file.write("==============================\n")
+    for bigram, count in bigram_count.most_common():
+        output_file.write(f"{' '.join(bigram)}\t\t{count}\n")
+
+    output_file.write("\nTrigrama \t\t Frecuencia\n")
+    output_file.write("==============================\n")
+    for trigram, count in trigram_count.most_common():
+        output_file.write(f"{' '.join(trigram)}\t\t{count}\n")
+
+print("Se han guardado los resultados en:", output_file_path)
